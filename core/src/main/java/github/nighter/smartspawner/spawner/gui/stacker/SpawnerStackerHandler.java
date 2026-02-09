@@ -238,7 +238,7 @@ public class SpawnerStackerHandler implements Listener {
         entityTypeCache.clear();
     }
 
-    private void removeViewer(String spawnerId, UUID playerId) {
+    public void removeViewer(String spawnerId, UUID playerId) {
         Set<UUID> viewers = activeViewers.get(spawnerId);
         if (viewers != null) {
             viewers.remove(playerId);

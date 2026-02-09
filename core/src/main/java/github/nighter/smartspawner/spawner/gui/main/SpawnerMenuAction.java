@@ -1,10 +1,12 @@
 package github.nighter.smartspawner.spawner.gui.main;
 
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.api.events.SpawnerExpClaimEvent;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
+import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerHolder;
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerUI;
 import github.nighter.smartspawner.spawner.gui.storage.ui.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
@@ -195,6 +197,15 @@ public class SpawnerMenuAction implements Listener {
     public void handleStorageClick(Player player, SpawnerData spawner) {
         Inventory pageInventory = spawnerStorageUI.createStorageInventory(spawner, 1, -1);
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
+        String spawnerId = spawner.getSpawnerId();
+        UUID playerId = player.getUniqueId();
+        Scheduler.runTaskLater(() -> {
+            Inventory topInventory = player.getOpenInventory().getTopInventory();
+            if (!(topInventory.getHolder(false) instanceof SpawnerStackerHolder)) {
+                // Remove viewer and cancel any pending updates
+                plugin.getSpawnerStackerHandler().removeViewer(spawnerId, playerId);
+            }
+        }, 1L);
         player.openInventory(pageInventory);
     }
 
