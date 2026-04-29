@@ -1,13 +1,16 @@
 package github.nighter.smartspawner.api;
 
+import github.nighter.smartspawner.api.data.GeneratedLoot;
 import github.nighter.smartspawner.api.data.SpawnerDataDTO;
 import github.nighter.smartspawner.api.data.SpawnerDataModifier;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Main API interface for SmartSpawner plugin.
@@ -141,4 +144,89 @@ public interface SmartSpawnerAPI {
      * @return a spawner data modifier, or null if spawner doesn't exist
      */
     SpawnerDataModifier getSpawnerModifier(String spawnerId);
+
+    // -------------------------------------------------------------------------
+    // Daycare / external plugin support
+    // -------------------------------------------------------------------------
+
+    /**
+     * Generates loot for the given entity type with the given mob count.
+     * Intended for external plugins (e.g., SpawnerDaycare) that need to simulate
+     * offline loot generation without a real placed spawner block.
+     *
+     * @param entityType the entity type whose loot table to use
+     * @param mobCount   the number of mobs to simulate (affects item counts and exp)
+     * @return the generated loot, never null
+     */
+    GeneratedLoot generateLootForType(EntityType entityType, int mobCount);
+
+    /**
+     * Creates an in-memory virtual spawner that is not persisted to disk and
+     * does not correspond to any placed block.  Virtual spawners exist only for
+     * the duration of a player session and must be removed via
+     * {@link #removeVirtualSpawner(String)} when no longer needed.
+     *
+     * @param entityType the entity type of the virtual spawner
+     * @param stackSize  the stack size (affects storage capacity and mob counts)
+     * @return the unique ID assigned to the virtual spawner
+     */
+    String createVirtualSpawner(EntityType entityType, int stackSize);
+
+    /**
+     * Removes a virtual spawner created by {@link #createVirtualSpawner}.
+     * Does nothing if the ID does not correspond to a virtual spawner.
+     *
+     * @param spawnerId the virtual spawner ID
+     */
+    void removeVirtualSpawner(String spawnerId);
+
+    /**
+     * Adds items to the virtual inventory of the specified spawner (real or virtual).
+     *
+     * @param spawnerId the spawner ID
+     * @param items     the items to add
+     */
+    void addItemsToVirtualSpawner(String spawnerId, List<ItemStack> items);
+
+    /**
+     * Sets the stored experience of the specified spawner (real or virtual).
+     *
+     * @param spawnerId the spawner ID
+     * @param exp       the new experience value
+     */
+    void setVirtualSpawnerExp(String spawnerId, int exp);
+
+    /**
+     * Returns the current stored experience of the specified spawner.
+     *
+     * @param spawnerId the spawner ID
+     * @return the current stored experience, or 0 if the spawner does not exist
+     */
+    int getVirtualSpawnerExp(String spawnerId);
+
+    /**
+     * Returns a snapshot of all items currently stored in the spawner's virtual
+     * inventory.  Keys are representative ItemStack templates (amount = 1) and
+     * values are total stacked counts.
+     *
+     * @param spawnerId the spawner ID
+     * @return item → count map, empty if spawner does not exist
+     */
+    Map<ItemStack, Long> getVirtualSpawnerItems(String spawnerId);
+
+    /**
+     * Clears all items from the virtual inventory of the specified spawner.
+     *
+     * @param spawnerId the spawner ID
+     */
+    void clearVirtualSpawnerItems(String spawnerId);
+
+    /**
+     * Opens the SmartSpawner main menu for the given player on the specified
+     * spawner (real or virtual).  Must be called on the main server thread.
+     *
+     * @param player    the player to open the menu for
+     * @param spawnerId the spawner ID
+     */
+    void openSpawnerMenu(Player player, String spawnerId);
 }

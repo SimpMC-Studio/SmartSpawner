@@ -298,6 +298,19 @@ public class VirtualInventory {
         return new HashMap<>(consolidatedItems);
     }
 
+    /**
+     * Clears all items from this virtual inventory and resets caches.
+     */
+    public void clear() {
+        consolidatedItems.clear();
+        displayInventoryCache.clear();
+        displayCacheDirty = true;
+        metricsCacheDirty = true;
+        sortedEntriesCache = null;
+        usedSlotsCache = 0;
+        totalItemsCache = 0;
+    }
+
     public int getUsedSlots() {
         // If cache is dirty but we haven't regenerated the display inventory yet,
         // calculate a quick estimate instead of rebuilding the whole display

@@ -16,6 +16,8 @@ public class SpawnerManager {
     private final SpawnerStorage spawnerStorage;
     // Set to keep track of confirmed ghost spawners to avoid repeated checks
     private final Set<String> confirmedGhostSpawners = ConcurrentHashMap.newKeySet();
+    // Set of virtual (non-persisted) spawner IDs – managed via the API for external plugins
+    private final Set<String> virtualSpawnerIds = ConcurrentHashMap.newKeySet();
 
     public SpawnerManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -232,12 +234,51 @@ public class SpawnerManager {
     }
 
     /**
-     * Marks a spawner as modified for batch saving
+     * Marks a spawner as modified for batch saving.
+     * Virtual spawners are silently skipped to prevent persistence attempts.
      *
      * @param spawnerId The ID of the modified spawner
      */
     public void markSpawnerModified(String spawnerId) {
+        if (virtualSpawnerIds.contains(spawnerId)) return;
         spawnerStorage.markSpawnerModified(spawnerId);
+    }
+
+    // ===============================================================
+    //                    Virtual Spawner Support
+    // ===============================================================
+
+    /**
+     * Registers a virtual (non-persisted) spawner in-memory only.
+     * It will not appear in location/world indexes and will never be saved to disk.
+     *
+     * @param id      the unique ID for the virtual spawner
+     * @param spawner the SpawnerData instance
+     */
+    public void addVirtualSpawner(String id, SpawnerData spawner) {
+        spawners.put(id, spawner);
+        virtualSpawnerIds.add(id);
+    }
+
+    /**
+     * Removes a virtual spawner and cleans up its resources.
+     *
+     * @param id the virtual spawner ID
+     */
+    public void removeVirtualSpawner(String id) {
+        if (!virtualSpawnerIds.remove(id)) return;
+        spawners.remove(id);
+        // No hologram to remove for virtual spawners (holograms require a loaded chunk)
+    }
+
+    /**
+     * Returns true if the given ID corresponds to a registered virtual spawner.
+     *
+     * @param id the spawner ID to check
+     * @return true if virtual
+     */
+    public boolean isVirtualSpawner(String id) {
+        return virtualSpawnerIds.contains(id);
     }
 
     public void markSpawnerDeleted(String spawnerId) {
